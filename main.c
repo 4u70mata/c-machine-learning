@@ -1,49 +1,82 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <math.h>
 
-float train[][2]  = {
-    {0,0},
-    {1,2},
-    {2,4},
-    {3,6},
-    {4,8},
-};
-#define train_count sizeof(train)/sizeof(train[0])
+#define MAX_ITERATIONS 100
+#define LEARNING_RATE 0.0001
+#define EPSILON 0.0000001
+#define num_points  sizeof(dataset) / sizeof(dataset[0])
 
+typedef struct {
+    float x;
+    float y;
+} DataPoint;
+
+// Squared difference for loss
 float 
-rand_float ()
+Loss(float x, float y, float w) {
+    return pow(w * x - y, 2); 
+}
+// Gradient of the loss function
+float 
+Gradient(float x, float y, float w) {
+    return 2 * x * (w * x - y); 
+}
+// Random number generation for w
+float 
+rand_float()
 {
     return (float) rand() / (float) RAND_MAX ;
 }
-float 
-cost_function(float w)
+
+int 
+main () 
 {
-    printf("Train Process beginning\n");
-    float mse = 0.0f;
-    for(size_t i = 0; i<train_count; i++ ){
-        float x = train[i][0];
-        float y = x*w;
-        float d = y- train[i][1];
-        mse +=d*d; // include math
-        //printf("Actual : %f , Expected: %f\n", train[i][1], y);
+    DataPoint dataset[] = {
+        {0.0, 0.0},
+        {1.0, 2.0},
+        {2.0, 4.0},
+        {3.0, 6.0},
+        {4.0, 8.0},
+        {5.0, 10.0},
+        {6.0, 12.0},
+        {13.0, 26.0},
+        {14.0, 28.0},
+        {15.0, 30.0},
+        {16.0, 32.0},
+
+    };
+
+    srand(44); // Seed
+    float w = rand_float()*10.0f ; 
+    float loss, gradient;
+
+    size_t i, j;
+    for (i = 0; i < MAX_ITERATIONS; ++i) {
+        loss = 0.0;
+        for (j = 0; j < num_points; ++j) {
+            // Calculate squared error for each point
+            loss += Loss(dataset[j].x, dataset[j].y, w);
+        }
+        printf("loss: %f -- iteration : [%zu]\n" , loss, i);
+        gradient = 0.0;
+        for (j = 0; j < num_points; ++j) {
+            // Total gradiant
+            gradient += Gradient(dataset[j].x, dataset[j].y, w);
+        }
+
+        // Basic gradient descent
+        w = w - LEARNING_RATE * gradient;
+
+        // Convergence condition
+        if (loss < EPSILON) {
+            printf("Converged after %zu iterations\n", i + 1);
+            break;
+        }
     }
-    mse /= train_count;
-    //printf("Mean Squared Error: %f\n", mse);
-    return mse;
-}
-int main(){
-    // model : y = x*w  
-    //time_t t;
-    //srand(time(&t));
-    srand(42);
-    float w = rand_float()*10.0f ; // initialize weight vector w
-    printf("Initialozation of weight vector w0: %f\n", w);
-    float cost = cost_function(w);
-    printf("cost with w0 :%f\n\n", cost);
-    float eps = 1e-3;
-    printf("grid search -esp :%f results with \n:", eps);
-    printf("cost function of w + eps : %f", cost_function(w+eps));
-    
+
+    printf("Final weight (w) value: %f\n", w);
+    printf("loss : %f", loss);
+
     return 0;
 }
